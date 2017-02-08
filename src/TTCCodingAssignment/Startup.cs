@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.Swagger.Model;
 
 namespace TTCCodingAssignment
 {
@@ -19,12 +20,7 @@ namespace TTCCodingAssignment
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
 
-            if (env.IsEnvironment("Development"))
-            {
-                // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
-                builder.AddApplicationInsightsSettings(developerMode: true);
-            }
-
+           
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
         }
@@ -34,10 +30,22 @@ namespace TTCCodingAssignment
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add framework services.
-            services.AddApplicationInsightsTelemetry(Configuration);
-
+         
             services.AddMvc();
+
+            services.AddSwaggerGen();
+            services.ConfigureSwaggerGen(options =>
+            {
+                options.SingleApiVersion(new Info
+                {
+                    Version = "v1",
+                    Title = "TTC Coding Assignment",
+                    Description = "Coding assignment for Trafalgar Tours Company",
+                    TermsOfService = "None"
+                });
+                //options.IncludeXmlComments(pathToDoc);
+                options.DescribeAllEnumsAsStrings();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
@@ -45,11 +53,19 @@ namespace TTCCodingAssignment
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+            if (!env.IsEnvironment("prod"))
+            {
+                app.UseDeveloperExceptionPage();
 
-            app.UseApplicationInsightsRequestTelemetry();
+                // Enable middleware to serve generated Swagger as a JSON endpoint
+                app.UseSwagger();
 
-            app.UseApplicationInsightsExceptionTelemetry();
+                // Enable middleware to serve swagger-ui assets (HTML, JS, CSS etc.)
+                app.UseSwaggerUi();
+            }
 
+
+           
             app.UseMvc();
         }
     }
