@@ -17,12 +17,10 @@ namespace TestLibrary
             Products = CreateProducts();
             OfferCalculator = new OfferCalculator(CreateOffers(this.Products));
 
-            // ... initialize data in the test database ...
         }
 
         public void Dispose()
         {
-            // ... clean up test data from the database ...
         }
 
         private Dictionary<string, IProduct> CreateProducts()
