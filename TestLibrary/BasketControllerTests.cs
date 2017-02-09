@@ -10,61 +10,25 @@ using TTCCodingAssignment.Interfaces;
 
 namespace TestLibrary
 {
-    public class BasketControllerTests
+    public class ProductsFixture : IDisposable
     {
-        [Fact]
-        public void NoDiscountScenario1()
+        public ProductsFixture()
         {
-            Dictionary<string, IProduct> products = CreateProducts();
-            IOfferCalculator offerCalculator = new OfferCalculator(CreateOffers(products));
-            IBasket basket = new BasketController(offerCalculator);
-            basket.Add(new BasketItem(products["Bread"], 1));
-            basket.Add(new BasketItem(products["Butter"], 1));
-            basket.Add(new BasketItem(products["Milk"], 1));
+            Products = CreateProducts();
+            OfferCalculator = new OfferCalculator(CreateOffers(this.Products));
 
-            Assert.Equal(2.95m, basket.CalculateTotal());
+            // ... initialize data in the test database ...
         }
 
-        [Fact]
-        public void DiscountScenario1()
+        public void Dispose()
         {
-            Dictionary<string, IProduct> products = CreateProducts();
-            Console.WriteLine(products.Count);
-            IOfferCalculator offerCalculator = new OfferCalculator(CreateOffers(products));
-            IBasket basket = new BasketController(offerCalculator);
-            basket.Add(new BasketItem(products["Bread"], 2));
-            basket.Add(new BasketItem(products["Butter"], 2));
-            
-            Assert.Equal(3.10m, basket.CalculateTotal());
+            // ... clean up test data from the database ...
         }
 
-        [Fact]
-        public void DiscountScenario2()
-        {
-            Dictionary<string, IProduct> products = CreateProducts();
-            IOfferCalculator offerCalculator = new OfferCalculator(CreateOffers(products));
-            IBasket basket = new BasketController(offerCalculator);
-            basket.Add(new BasketItem(products["Milk"], 4));
-            
-            Assert.Equal(3.45m, basket.CalculateTotal());
-        }
-
-        [Fact]
-        public void DiscountScenario3()
-        {
-            Dictionary<string, IProduct> products = CreateProducts();
-            IOfferCalculator offerCalculator = new OfferCalculator(CreateOffers(products));
-            IBasket basket = new BasketController(offerCalculator);
-            basket.Add(new BasketItem(products["Bread"], 1));
-            basket.Add(new BasketItem(products["Butter"], 2));
-            basket.Add(new BasketItem(products["Milk"], 8));
-
-            Assert.Equal(9.00m, basket.CalculateTotal());
-        }
-        private Dictionary<string,IProduct> CreateProducts()
+        private Dictionary<string, IProduct> CreateProducts()
         {
             Dictionary<string, IProduct> products = new Dictionary<string, IProduct>();
-            products.Add("Butter",new Product("Butter", 0.80m));
+            products.Add("Butter", new Product("Butter", 0.80m));
             products.Add("Milk", new Product("Milk", 1.15m));
             products.Add("Bread", new Product("Bread", 1.00m));
             return products;
@@ -74,7 +38,7 @@ namespace TestLibrary
         {
             List<IOffer> offers = new List<IOffer>();
 
-            List<IOfferCondition> conditions1 = new List<IOfferCondition>() ;
+            List<IOfferCondition> conditions1 = new List<IOfferCondition>();
             conditions1.Add(new OfferCondition(products["Butter"], 2));
             conditions1.Add(new OfferCondition(products["Bread"], 1));
 
@@ -84,12 +48,65 @@ namespace TestLibrary
 
             List<IOfferCondition> conditions2 = new List<IOfferCondition>();
             conditions2.Add(new OfferCondition(products["Milk"], 4));
-          
+
             List<IOfferDiscount> discounts2 = new List<IOfferDiscount>();
             discounts2.Add(new OfferDiscount(1, 100, products["Milk"]));
             offers.Add(new Offer(conditions2, discounts2));
 
             return offers;
         }
+        public IOfferCalculator OfferCalculator { get; private set; }
+        public Dictionary<string, IProduct> Products { get; private set; }
+
+    }
+    public class BasketControllerTests : IClassFixture<ProductsFixture>
+    {
+        ProductsFixture fixture;
+        public BasketControllerTests(ProductsFixture fixture)
+        {
+            this.fixture = fixture;
+        }
+        [Fact]
+        public void NoDiscountScenario1()
+        {
+           
+            IBasket basket = new BasketController(fixture.OfferCalculator);
+            basket.Add(new BasketItem(fixture.Products["Bread"], 1));
+            basket.Add(new BasketItem(fixture.Products["Butter"], 1));
+            basket.Add(new BasketItem(fixture.Products["Milk"], 1));
+
+            Assert.Equal(2.95m, basket.CalculateTotal());
+        }
+
+        [Fact]
+        public void DiscountScenario1()
+        {
+            IBasket basket = new BasketController(fixture.OfferCalculator);
+            basket.Add(new BasketItem(fixture.Products["Bread"], 2));
+            basket.Add(new BasketItem(fixture.Products["Butter"], 2));
+            
+            Assert.Equal(3.10m, basket.CalculateTotal());
+        }
+
+        [Fact]
+        public void DiscountScenario2()
+        {
+            IBasket basket = new BasketController(fixture.OfferCalculator);
+            basket.Add(new BasketItem(fixture.Products["Milk"], 4));
+            
+            Assert.Equal(3.45m, basket.CalculateTotal());
+        }
+
+        [Fact]
+        public void DiscountScenario3()
+        {
+            IBasket basket = new BasketController(fixture.OfferCalculator);
+            basket.Add(new BasketItem(fixture.Products["Bread"], 1));
+            basket.Add(new BasketItem(fixture.Products["Butter"], 2));
+            basket.Add(new BasketItem(fixture.Products["Milk"], 8));
+
+            Assert.Equal(9.00m, basket.CalculateTotal());
+        }
+        
     }
 }
