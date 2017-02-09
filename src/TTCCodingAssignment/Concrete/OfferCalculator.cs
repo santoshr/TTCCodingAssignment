@@ -20,9 +20,16 @@ namespace TTCCodingAssignment.Concrete
 
         public decimal CalculateDiscount(Dictionary<string,IBasketItem> basketItems)
         {
+
             decimal discount = 0.00m;
             if (basketItems == null || basketItems.Count <=0)
                 return discount;
+
+            bool anyDiscountsApplied = true;
+            while (basketItems.Count > 0 && anyDiscountsApplied)
+            {
+                //reset at the start of the loop
+                anyDiscountsApplied = false;
 
                 foreach (IOffer offer in offers)
                 {
@@ -36,20 +43,25 @@ namespace TTCCodingAssignment.Concrete
                             break;
                         }
                         conditionsMet = true;
-                        //if condition is met deduct the quantity matched
-                        basketItems[condition.Product.Name].Quantity -= condition.Count;
+                        
                         //if quantity is now 0 remove tht item as we don't care about it anymore
-                        if (basketItems[condition.Product.Name].Quantity == 0)
+                        if ((basketItems[condition.Product.Name].Quantity - condition.Count) == 0)
                             basketItems.Remove(condition.Product.Name);
+                        else
+                            //deduct the quantity matched
+                            basketItems[condition.Product.Name].Quantity -= condition.Count;
+
                     }
                     if (conditionsMet)
                     {
+                        anyDiscountsApplied = true;
                         foreach (IOfferDiscount offerDiscount in offer.Discounts)
                         {
                             discount += ((offerDiscount.Product.Price * offerDiscount.PercentDiscount) / 100) * offerDiscount.Count;
                         }
                     }
                 }
+            }
             
             return discount;
             

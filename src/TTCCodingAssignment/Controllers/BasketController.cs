@@ -8,6 +8,7 @@ using TTCCodingAssignment.Concrete;
 
 namespace TTCCodingAssignment.Controllers
 {
+    [Route("api/[controller]")]
     public class BasketController : Controller, IBasket
     {
         Dictionary<string,IBasketItem> basketItems = new Dictionary<string, IBasketItem>();
@@ -19,6 +20,8 @@ namespace TTCCodingAssignment.Controllers
                 throw new NullReferenceException("Offer Calculator cannot be null.");
             this.offerCalulator = offerCalc;
         }
+
+        [HttpPost]
         public void Add(IBasketItem basketItem)
         {
             if (basketItem == null)
@@ -33,6 +36,7 @@ namespace TTCCodingAssignment.Controllers
             }
         }
 
+        [HttpGet]
         public decimal CalculateTotal()
         {
             decimal total = 0.00m;
@@ -40,7 +44,11 @@ namespace TTCCodingAssignment.Controllers
             {
                 total += basketitem.Value.Product.Price * basketitem.Value.Quantity;
             }
-            decimal discount = offerCalulator.CalculateDiscount(basketItems);
+
+            //make a copy of basket as we don't want it to come back modified
+            Dictionary<string, IBasketItem> basketItemsCopy = new Dictionary<string, IBasketItem>(basketItems);
+
+            decimal discount = offerCalulator.CalculateDiscount(basketItemsCopy);
             return (total - discount);
         }
 
